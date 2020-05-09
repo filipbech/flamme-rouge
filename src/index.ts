@@ -1,1 +1,1 @@
-import "./elements/aarhusintra-design/aarhusintra-design.element";
+import "./elements/fr-app.element";

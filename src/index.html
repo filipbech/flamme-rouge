@@ -1,52 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
+    <title>Flamme rouge</title>
 </head>
-
 <body>
-
-    <form id="search-input">
-        <input type="text" name="searchWord" /> <button>Search</button>
-    </form>
-
-    Tab: <span class="title"></span> <span class="count"></span>
-
-    <soroe-search></soroe-search>
-
-    <script>
-        const tabCount = document.querySelector('span.count');
-        const tabTitle = document.querySelector('span.title');
-        const widget = document.querySelector('soroe-search');
-        widget.configuration = {
-            apiKey: '75eccd536a484111bbc1d22cbd6a33c9'
-        };       
-        document.getElementById('search-input').addEventListener('submit', e => {
-            e.preventDefault()
-            const formData = new FormData(e.target);
-            widget.search(formData.get('searchWord')).then(count => {
-                tabCount.innerText = count;
-            });
-            return false;
-        });
-        customElements.whenDefined('soroe-search').then(e=> {
-            tabTitle.innerText = widget.tabName;
-        });
-
-    </script>
-
-    <script>
-        window['colibo'] = {
-            cultureName: 'da-DK',
-            theme: {
-                    logoBackgroundColor: '#000',
-                    navigationColor: '#00ff00',
-                    primaryColor: '#ff00ff'
-            },
-            fetch: (...args)=> fetch(...args)
-        };
-    </script>
+    <fr-app></fr-app>
 </body>
-
 </html>
