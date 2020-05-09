@@ -1,9 +1,9 @@
-import { BoardPart } from "./models";
+import { TrackTile } from "./models";
 
 export const sprinteurCards = [2, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5, 9, 9, 9];
 export const rouleurCards = [3, 3, 3, 4, 4, 4, 5, 5, 5, 6, 6, 6, 7, 7, 7];
 
-export const boardParts: BoardPart[] = [
+export const boardParts: TrackTile[] = [
     {
         type: 'straight',
         identifier: 'c',

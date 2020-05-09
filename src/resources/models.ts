@@ -9,15 +9,18 @@ export type PlayerType = 'person';
 export type TeamColor = 'red' | 'blue' | 'green' | 'black';
 
 export interface IRider {
-    type: 'Rouleur' | 'Sprinteur';
+    type: RiderType;
     position: number;
     selectedCard: number | null;
     cards: number[];
     playedCards: number[];
-}
+    recycledCards: number[];
 
-export interface BoardPart {
-    type: BoardPartType;
+}
+export type RiderType = 'Rouleur' | 'Sprinteur';
+
+export interface TrackTile {
+    type: TrackTileType;
     fields: FieldType[][];
     identifier: string;
     goalAfter?: number;
@@ -25,6 +28,6 @@ export interface BoardPart {
     direction?: 'left' | 'right';
 }
 
-export type BoardPartType = 'straight' | 'curve' | 'corner' | 'goal' | 'start';
+export type TrackTileType = 'straight' | 'curve' | 'corner' | 'goal' | 'start';
 
 export type FieldType = 'flat' | 'mountain' | 'descend';
