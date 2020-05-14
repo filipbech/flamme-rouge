@@ -21,7 +21,6 @@ export class FrAppElement extends LitElement {
         super.connectedCallback();
         this.game = document.createElement('fr-game') as FrGameElement;
         this.game.initiatePlayers('Oliver', 'Christoffer', 'Filip');
-        this.game.initiateTrack();
     }
 
     render() {
