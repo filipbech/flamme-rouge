@@ -19,13 +19,14 @@ export class FrBoardElement extends LitElement {
         }
         .row {
             display:inline-block;
+            vertical-align:top;
             border:1px solid #333;
         }
         .field {
             display:block;
             border:1px solid #666;
             width:30px;
-            height:10px;
+            height:1em;
         }
         .mountain {
             border-color:red;
@@ -77,7 +78,12 @@ export class FrBoardElement extends LitElement {
                                 }
                                 return html`
                                     <div class=${classMap(classes)}>
-                                        ${rider ? rider.type : '***'}
+                                        ${!rider 
+                                            ? ' '
+                                            : rider.type === 'Rouleur'
+                                                ? "R"
+                                                : "S"
+                                         }
                                     </div>
                                 `
                             })}

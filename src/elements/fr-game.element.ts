@@ -127,13 +127,12 @@ const takeStartPositions = (players: IPlayer[], track: TrackTile[]) => {
 }
 
 
-const selectRandomFirstCards = (players: IPlayer[]) => {
+const selectRandomCards = (players: IPlayer[]) => {
     players.forEach(player => {
         player.riders.forEach(rider => {
             rider.selectedCard = shuffle([...rider.cards])[0];
         });
     })
 }
-
 
 
