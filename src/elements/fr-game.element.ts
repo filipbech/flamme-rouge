@@ -1,5 +1,5 @@
 import { LitElement, html, customElement, property } from "lit-element";
-import { IPlayer, TrackTile, Row, IRider, TrackTileType, FieldType } from "../resources/models";
+import { IPlayer, TrackTile, Row, IRider, TrackTileType, FieldType, RiderWithPosition } from "../resources/models";
 import { initiatePlayer, initiateTrack, shuffle } from '../resources/game-helpers';
 
 import './fr-board.element';
@@ -13,7 +13,7 @@ export class FrGameElement extends LitElement {
         this.players = players.map((name, i) => initiatePlayer(name, i));
 
         takeStartPositions(this.players, this.track);
-        selectRandomFirstCards(this.players);
+        selectRandomCards(this.players);
 
     }
     initiateTrack() {
@@ -33,14 +33,24 @@ export class FrGameElement extends LitElement {
             });
         })
 
-        // calculate slipstream here
-
         this.track = [...this.track];
+
+        setTimeout(_=> {
+            
+            this.applySlipstreaming();
+
+            this.track = [...this.track];
+            this.assignExhaustionCards();
+
+            //todo: this is only for test
+            selectRandomCards(this.players);
+        }, 2000);
+
+        
     }
 
-    moveRider(trackIndex:number, rowIndex: number, count: number, rider:IRider, mark?: FieldType) {
-        console.log(trackIndex, rowIndex, count, rider);
-        if(rider.selectedCard === count) {
+    moveRider(trackIndex:number, rowIndex: number, count: number, rider:IRider, slipstream=false, mark?: FieldType) {
+        if(rider.selectedCard === count || slipstream) {
             //this is the first move - remove player from board
             const fieldIndex = this.track[trackIndex].rows[rowIndex].fields.findIndex(r => r === rider);
             this.track[trackIndex].rows[rowIndex].fields[fieldIndex] = null;
@@ -48,7 +58,6 @@ export class FrGameElement extends LitElement {
 
         if(count > 0) {
             //move one step forward and call again
-
             let newTrackIndex, newRowIndex;
             let newCount = count-1;
             let newMark = mark ? mark : this.track[trackIndex].rows[rowIndex].fieldType;
@@ -62,32 +71,111 @@ export class FrGameElement extends LitElement {
                 // handle overflowing the last card...
             }
 
-            //add logic to account for uphill and downhill max/min moves
-            //todo
-
-
+            //todo: add logic to account for uphill and downhill max/min moves
 
             if(newCount === 0) {
- 
-                //this is the last move - put down the player
+                 //this is the last move - put down the player
                 const fieldIndex = this.track[newTrackIndex].rows[newRowIndex].fields.findIndex(r => r === null);
                 if(fieldIndex === -1) {
                     //crap - the row is filled - move back somehow!
-                    //todo
+                    //todo: move back in stead...
                     console.log('no empty field - rider removed', rider)
                 }
                 this.track[newTrackIndex].rows[newRowIndex].fields[fieldIndex] = rider;
+
+                if(!slipstream) {
+                    rider.playedCards.push(rider.selectedCard!);
+                    rider.selectedCard = null;
+                }
+
             } else {
-                this.moveRider(newTrackIndex, newRowIndex, newCount, rider, newMark);
+                this.moveRider(newTrackIndex, newRowIndex, newCount, rider, false, newMark);
             }
         }
 
     }
 
+    assignExhaustionCards() {
 
+        const flatRowsList: Row[] = [];
+        this.track.forEach(tile => {
+            flatRowsList.push(...tile.rows);
+        });
+    
+        flatRowsList.reverse();
+    
+        let lastRowWasEmpty = false;
+        flatRowsList.forEach(row => {
+            if(row.fields[0]) {
+                if(lastRowWasEmpty) {
+                    row.fields.filter(riderOrNull => !!riderOrNull).forEach(rider => {
+                        // todo: consider if exhaustion cards should be recognizeable from the regular 2's...
+                        rider!.recycledCards.push(2);
+                    });
+                }
+                lastRowWasEmpty = false;
+            } else {
+                lastRowWasEmpty = true;
+            }
+        });
+    }
+    
+    applySlipstreaming() {
+    
+        let pack: RiderWithPosition[] = [];
+        let lastRowWasEmpty = false;
+    
+        let startOver = false;
+        //todo: probably turn this into a for-loop so we can break instead of this nonsense
 
+        this.track.forEach((tile, trackIndex) => {
+            if(startOver) return;
+            tile.rows.forEach((row, rowIndex) => {
+                if(startOver) return;
+                const rowRiders = row.fields
+                    .filter(riderOrNull => riderOrNull && row.fieldType !== "mountain")
+                    .map(rider => {
+                        return {
+                            rider,
+                            trackIndex,
+                            rowIndex
+                        }
+                    }) as RiderWithPosition[];
+    
+                if(rowRiders.length === 0) {
+                    if(lastRowWasEmpty) {
+                        pack = [];
+                    }
+                    lastRowWasEmpty = true;
+                } else {
+                    if(lastRowWasEmpty && pack.length) {
 
+                        if(row.fieldType !== "mountain") {
+                            //slipstream applies
+                            [...pack].reverse().forEach(riderWithPosition => {
+                                this.moveRider(riderWithPosition.trackIndex, riderWithPosition.rowIndex, 1, riderWithPosition.rider, true);
+                            });
+                            startOver = true;
+                        } else {
+                            pack = [];
+                        }
+                    } else {
+                        pack.push(...rowRiders);
+                    }
+                    lastRowWasEmpty = false;
+                }
+            });
+        });
 
+        if(startOver) {
+            this.track = [...this.track];
+            setTimeout(_=> {
+                this.applySlipstreaming();
+                
+            }, 1000);
+        }
+    };
+    
     @property()
     players: IPlayer[] = [];
 
@@ -134,5 +222,4 @@ const selectRandomCards = (players: IPlayer[]) => {
         });
     })
 }
-
 

@@ -15,9 +15,14 @@ export interface IRider {
     playedCards: number[];
     recycledCards: number[];
     color:TeamColor;
-
 }
 export type RiderType = 'Rouleur' | 'Sprinteur';
+
+export interface RiderWithPosition {
+    rider: IRider;
+    rowIndex: number;
+    trackIndex: number;
+}
 
 export interface TrackTile {
     type: TrackTileType;
