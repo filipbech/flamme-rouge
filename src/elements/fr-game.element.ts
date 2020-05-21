@@ -49,8 +49,9 @@ export class FrGameElement extends LitElement {
         
     }
 
-    moveRider(trackIndex:number, rowIndex: number, count: number, rider:IRider, slipstream=false, mark?: FieldType) {
-        if(rider.selectedCard === count || slipstream) {
+    moveRider(trackIndex:number, rowIndex: number, count: number, rider:IRider, descendMinMovesEnforced=false, slipstream=false, mark?: FieldType) {
+
+        if((rider.selectedCard === count || slipstream) && !descendMinMovesEnforced) {
             //this is the first move - remove player from board
             const fieldIndex = this.track[trackIndex].rows[rowIndex].fields.findIndex(r => r === rider);
             this.track[trackIndex].rows[rowIndex].fields[fieldIndex] = null;
@@ -60,18 +61,41 @@ export class FrGameElement extends LitElement {
             //move one step forward and call again
             let newTrackIndex, newRowIndex;
             let newCount = count-1;
-            let newMark = mark ? mark : this.track[trackIndex].rows[rowIndex].fieldType;
+            const moveCount = rider.selectedCard! - count + 1;
 
-            if(rowIndex+1 <= this.track[trackIndex].rows.length-1) {
+            const currentFieldType = this.track[trackIndex].rows[rowIndex].fieldType;
+
+            let newMark: FieldType = mark ? mark : currentFieldType;
+
+            if (mark !== currentFieldType) {
+                if (currentFieldType === "mountain" || mark === "mountain") {
+                    newMark = "mountain";
+                }
+                else if (currentFieldType === "descend" && moveCount === 1) {
+                    newMark = "descend"
+                }
+            }
+            mark = newMark;
+
+            if(rowIndex+1 <= this.track[trackIndex].rows.length - 1) {
                 newRowIndex = rowIndex+1;
                 newTrackIndex = trackIndex;
             } else {
                 newTrackIndex = trackIndex+1
                 newRowIndex = 0;
-                // handle overflowing the last card...
+                // handle overflowing the last card (after the finish line)...
             }
 
-            //todo: add logic to account for uphill and downhill max/min moves
+            if(mark === "mountain" && moveCount >= 5) {
+                // if you encounter a mountain-field, you cannot move more than 5 fields this round
+                newCount = 0;
+                console.log('moves limited to 5 because of mountain')
+            }
+            if(mark === "descend" && !descendMinMovesEnforced && rider.selectedCard! < 5) {
+                descendMinMovesEnforced = true;
+                newCount = 4;
+                console.log('downhill boost added');
+            }
 
             if(newCount === 0) {
                  //this is the last move - put down the player
@@ -89,7 +113,7 @@ export class FrGameElement extends LitElement {
                 }
 
             } else {
-                this.moveRider(newTrackIndex, newRowIndex, newCount, rider, false, newMark);
+                this.moveRider(newTrackIndex, newRowIndex, newCount, rider, descendMinMovesEnforced, false, newMark);
             }
         }
 
@@ -126,7 +150,6 @@ export class FrGameElement extends LitElement {
         let lastRowWasEmpty = false;
     
         let startOver = false;
-        //todo: probably turn this into a for-loop so we can break instead of this nonsense
 
         this.track.forEach((tile, trackIndex) => {
             if(startOver) return;
@@ -153,7 +176,7 @@ export class FrGameElement extends LitElement {
                         if(row.fieldType !== "mountain") {
                             //slipstream applies
                             [...pack].reverse().forEach(riderWithPosition => {
-                                this.moveRider(riderWithPosition.trackIndex, riderWithPosition.rowIndex, 1, riderWithPosition.rider, true);
+                                this.moveRider(riderWithPosition.trackIndex, riderWithPosition.rowIndex, 1, riderWithPosition.rider, false, true);
                             });
                             startOver = true;
                         } else {
@@ -171,7 +194,6 @@ export class FrGameElement extends LitElement {
             this.track = [...this.track];
             setTimeout(_=> {
                 this.applySlipstreaming();
-                
             }, 1000);
         }
     };
